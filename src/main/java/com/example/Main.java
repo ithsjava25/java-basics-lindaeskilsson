@@ -7,12 +7,10 @@ import java.io.Console;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 
 public class Main {
 
-    //metod för att räka ut genomsnittspris
+    // metod för att räkna ut genomsnittspris
     static double calculateAverage(List<ElpriserAPI.Elpris> priser) {
         double sum = 0;
         for (ElpriserAPI.Elpris pris : priser) {
@@ -32,7 +30,7 @@ public class Main {
         return billigast;
     }
 
-    // En metod för att hitta den dyraste timmen
+    // en metod för att hitta den dyraste timmen
     static ElpriserAPI.Elpris findMax(List<ElpriserAPI.Elpris> priser) {
         ElpriserAPI.Elpris dyrast = null;
         for (ElpriserAPI.Elpris pris : priser) {
@@ -43,7 +41,7 @@ public class Main {
         return dyrast;
     }
 
-    // metod för att hitta bästa ladningsfönstret
+    // metod för att hitta bästa laddningsfönstret
     static String findBestWindow(List<ElpriserAPI.Elpris> priser, int timmar) {
         if (priser.size() < timmar) {
             return "För lite data";
@@ -68,23 +66,7 @@ public class Main {
         return start.timeStart() + " -> " + timmar + "h (totalt " + String.format("%.2f", cheapestPrice) + " öre)";
     }
 
-    // en metod för att läsa argument från kommandoraden
-    static Map<String, String> parseArgs(String[] args) {
-        Map<String, String> map = new HashMap<>();
-        for (int i = 0; i < args.length; i++) {
-            String a = args[i];
-            if (a.startsWith("--")) { // bara flaggor som börjar med --
-                if (i + 1 < args.length && !args[i + 1].startsWith("--")) {
-                    map.put(a, args[++i]); // flagga med värde, ex --zone SE3
-                } else {
-                    map.put(a, ""); // flagga utan värde, t.ex --help
-                }
-            }
-        }
-        return map;
-    }
-
-    // printar ut hjälptexten.
+    // skriver ut hjälptext i terminal
     static void printHelp() {
         System.out.println("""
         Electricity Price Optimizer CLI
@@ -105,28 +87,56 @@ public class Main {
         """);
     }
 
-
     public static void main(String[] args) {
 
-        // 1. Läs in argument från consol
-        var input = parseArgs(args);
+        // Egna variabler istället för Map
+        String zone = "";
+        String dateStr = LocalDate.now().toString(); // standard = idag
+        boolean sorted = false;
+        String charging = "";
+        boolean help = false;
 
-        // 2. Visa hjälptext om --help finns
-        if (input.containsKey("--help")) {
+        // Läs igenom argumenten från kommandoraden
+        for (int i = 0; i < args.length; i++) {
+            switch (args[i]) {
+                case "--zone":
+                    if (i + 1 < args.length) {
+                        zone = args[++i]; // ta nästa som värde
+                    }
+                    break;
+                case "--date":
+                    if (i + 1 < args.length) {
+                        dateStr = args[++i];
+                    }
+                    break;
+                case "--sorted":
+                    sorted = true; // flagga utan värde
+                    break;
+                case "--charging":
+                    if (i + 1 < args.length) {
+                        charging = args[++i];
+                    }
+                    break;
+                case "--help":
+                    help = true;
+                    break;
+            }
+        }
+
+        // Om --help finns, skriv ut och avsluta
+        if (help) {
             printHelp();
             return;
         }
 
-        // 3. Skapa console (för input från användaren)
+        // Console (för input från användaren)
         Console console = System.console();
         if (console == null) {
-            // I IDE (t.ex. IntelliJ) fungerar inte console.
             System.out.println("OBS: System.console() är null i din IDE. Kör i terminalen för att använda readLine().");
             return;
         }
 
-        // 4. Kolla zon (SE1–SE4). Om fel, fråga användaren igen.
-        String zone = input.getOrDefault("--zone", "");
+        // Kolla zon (SE1–SE4). Om fel, fråga användaren igen tills zon vald.
         while (zone.isEmpty() || !List.of("SE1", "SE2", "SE3", "SE4").contains(zone)) {
             if (!zone.isEmpty()) {
                 System.out.println("Fel: Ogiltig zon. Välj mellan SE1, SE2, SE3 eller SE4.");
@@ -134,11 +144,10 @@ public class Main {
             zone = console.readLine("Välj elzon (SE1, SE2, SE3, SE4): ").trim();
         }
 
-        // 5. Datum (standard = idag)
-        String dateStr = input.getOrDefault("--date", LocalDate.now().toString());
+        // Sätter datum
         LocalDate date = LocalDate.parse(dateStr);
 
-        // 6. Skapa API och hämta priser
+        // Hämta priser från API
         ElpriserAPI api = new ElpriserAPI();
         List<ElpriserAPI.Elpris> priser = api.getPriser(date, ElpriserAPI.Prisklass.valueOf(zone));
 
@@ -147,8 +156,8 @@ public class Main {
             return;
         }
 
-        // 7. Om --sorted finns, sortera från dyrast till billigast
-        if (input.containsKey("--sorted")) {
+        // Sortering av priser i fallande ordning
+        if (sorted) {
             priser.sort(Comparator.comparingDouble(ElpriserAPI.Elpris::sekPerKWh).reversed());
             System.out.println("Priser (fallande):");
             for (ElpriserAPI.Elpris p : priser) {
@@ -156,18 +165,17 @@ public class Main {
             }
         }
 
-        // 8. Statistik: medel, billigast, dyrast
-        double avg = calculateAverage(priser);
+        //Statistik
+        double avarage = calculateAverage(priser);
         ElpriserAPI.Elpris billigast = findMin(priser);
         ElpriserAPI.Elpris dyrast = findMax(priser);
-
+        System.out.println("  ");// för att skapa lite mer lättläst output när vi kör koden.
         System.out.println("Statistik för " + date + " (" + zone + "):");
-        System.out.println("Genomsnittspris: " + String.format("%.2f", avg) + " öre/kWh");
+        System.out.println("Genomsnittspris: " + String.format("%.2f", avarage) + " öre/kWh");
         System.out.println("Billigaste timmen: " + billigast.timeStart() + " -> " + billigast.sekPerKWh() + " öre/kWh");
         System.out.println("Dyraste timmen: " + dyrast.timeStart() + " -> " + dyrast.sekPerKWh() + " öre/kWh");
 
-        // 9. Laddningsfönster om --charging finns
-        String charging = input.getOrDefault("--charging", "");
+        // Laddningsfönster
         if (!charging.isEmpty()) {
             int timmar = -1;
             while (timmar == -1) {

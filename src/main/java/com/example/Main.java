@@ -3,10 +3,10 @@ package com.example;
 // Import av API-klassen
 import com.example.api.ElpriserAPI;
 
-import java.io.Console;
-import java.time.LocalDate;
-import java.util.Comparator;
-import java.util.List;
+import java.io.Console;     // Gör det möjligt att läsa in text från användaren i terminalen
+import java.time.LocalDate; // Används för att jobba med datum
+import java.util.Comparator; // Hjälper mig att jämföra och sortera objekt
+import java.util.List;      // En lista = samling av objekt i ordning
 
 public class Main {
 

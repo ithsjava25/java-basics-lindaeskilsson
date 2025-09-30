@@ -49,8 +49,8 @@ public class Main {
             return "För lite data";
         }
 
-        double bästaSumma = Double.MAX_VALUE; // stort startvärde
-        int bästaStart = 0; // index för bästa starttimme
+        double cheapestPrice = Double.MAX_VALUE; // stort startvärde
+        int cheapestStartHour = 0; // index för bästa starttimme
 
         // Loopa genom alla möjliga startpunkter
         for (int i = 0; i <= priser.size() - timmar; i++) {
@@ -58,14 +58,14 @@ public class Main {
             for (int j = 0; j < timmar; j++) {
                 sum += priser.get(i + j).sekPerKWh();
             }
-            if (sum < bästaSumma) {
-                bästaSumma = sum;
-                bästaStart = i;
+            if (sum < cheapestPrice) {
+                cheapestPrice = sum;
+                cheapestStartHour = i;
             }
         }
 
-        ElpriserAPI.Elpris start = priser.get(bästaStart);
-        return start.timeStart() + " -> " + timmar + "h (totalt " + String.format("%.2f", bästaSumma) + " öre)";
+        ElpriserAPI.Elpris start = priser.get(cheapestStartHour);
+        return start.timeStart() + " -> " + timmar + "h (totalt " + String.format("%.2f", cheapestPrice) + " öre)";
     }
 
     // en metod för att läsa argument från kommandoraden
@@ -181,8 +181,8 @@ public class Main {
                     }
                 }
             }
-            String fönster = findBestWindow(priser, timmar);
-            System.out.println("Optimalt laddningsfönster (" + timmar + "h): " + fönster);
+            String priceWindow = findBestWindow(priser, timmar);
+            System.out.println("Optimalt laddningsfönster (" + timmar + "h): " + priceWindow);
         }
     }
 }

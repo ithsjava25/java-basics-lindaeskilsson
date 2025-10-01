@@ -1,6 +1,6 @@
 package com.example;
 
-import com.example.api.ElpriserAPI; // importera API
+import com.example.api.ElpriserAPI; // importera API:et
 
 import java.text.NumberFormat; // Format för tal
 import java.time.LocalDate; // Representerar datum
